@@ -15,6 +15,8 @@ public class MenuActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu);
         Button cerrarSesionBtn = findViewById(R.id.Cerrar_Sesion);
+        Button cargarProductosBtn = findViewById(R.id.cargarProductosBtn);
+
         cerrarSesionBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -28,5 +30,16 @@ public class MenuActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+        cargarProductosBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MenuActivity.this, CargarActivity.class);
+                startActivity(intent);
+            }
+        });
+
+
+
     }
 }
