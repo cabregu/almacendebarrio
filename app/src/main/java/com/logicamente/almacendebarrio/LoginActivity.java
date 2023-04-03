@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -30,6 +31,16 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        SharedPreferences sharedPreferences = getSharedPreferences("MyPrefs", MODE_PRIVATE);
+        boolean isLoggedIn = sharedPreferences.getBoolean("isLoggedIn", false);
+        if (isLoggedIn) {
+            // Si el usuario ya ha iniciado sesión, lanza directamente la actividad MenuActivity
+            Intent intent = new Intent(LoginActivity.this, MenuActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        }
+
 
         editTextUsername = findViewById(R.id.editText_username);
         editTextPassword = findViewById(R.id.editText_password);
@@ -56,7 +67,7 @@ public class LoginActivity extends AppCompatActivity {
 
             try {
                 // Establecer la conexión con el servidor PHP
-                URL url = new URL("http://tu_servidor.com/login.php");
+                URL url = new URL("http://www.logicamente.com.ar/login.php");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setDoOutput(true);
@@ -66,9 +77,9 @@ public class LoginActivity extends AppCompatActivity {
                 OutputStream os = conn.getOutputStream();
                 BufferedWriter writer = new BufferedWriter(
                         new OutputStreamWriter(os, "UTF-8"));
-                String data = URLEncoder.encode("username", "UTF-8") + "="
+                String data = URLEncoder.encode("usuario", "UTF-8") + "="
                         + URLEncoder.encode(username, "UTF-8") + "&"
-                        + URLEncoder.encode("password", "UTF-8") + "="
+                        + URLEncoder.encode("pass", "UTF-8") + "="
                         + URLEncoder.encode(password, "UTF-8");
                 writer.write(data);
                 writer.flush();
@@ -93,7 +104,7 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String result) {
             if (result != null) {
-                if (result.equals("success")) {
+                if (result.equals("ok")) {
                     // El inicio de sesión es exitoso, hacer algo aquí
 
                     // Lanzar la nueva actividad
@@ -109,6 +120,9 @@ public class LoginActivity extends AppCompatActivity {
 
 
                 } else {
+
+                    Toast.makeText(getApplicationContext(), "Rechazado", Toast.LENGTH_SHORT).show();
+
                     // El inicio de sesión falló, hacer algo aquí
                 }
             } else {
