@@ -14,7 +14,6 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import java.io.IOException;
-
 import com.google.android.gms.vision.CameraSource;
 import com.google.android.gms.vision.Detector;
 import com.google.android.gms.vision.barcode.Barcode;
@@ -43,6 +42,7 @@ public class CameraFragment extends Fragment implements SurfaceHolder.Callback, 
         }
 
         return view;
+
     }
 
     @Override
@@ -78,10 +78,12 @@ public class CameraFragment extends Fragment implements SurfaceHolder.Callback, 
             if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
                 return;
+
             }
             mCameraSource.start(mCameraView.getHolder());
         } catch (IOException e) {
             Log.e(TAG, e.getMessage());
+
         }
     }
 
