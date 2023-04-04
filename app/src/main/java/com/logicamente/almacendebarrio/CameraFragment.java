@@ -1,54 +1,113 @@
 package com.logicamente.almacendebarrio;
-import android.content.Intent;
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
-import androidx.fragment.app.Fragment;
+import android.util.Log;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
+import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
-import com.google.zxing.integration.android.IntentIntegrator;
-import com.google.zxing.integration.android.IntentResult;
+import android.widget.Toast;
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.Fragment;
+import java.io.IOException;
 
-public class CameraFragment extends Fragment {
-    private static final int REQUEST_CODE_SCAN = 0;
-    private SurfaceView surfaceView;
+import com.google.android.gms.vision.CameraSource;
+import com.google.android.gms.vision.Detector;
+import com.google.android.gms.vision.barcode.Barcode;
+import com.google.android.gms.vision.barcode.BarcodeDetector;
+
+
+public class CameraFragment extends Fragment implements SurfaceHolder.Callback, Detector.Processor<Barcode> {
+
+    private static final String TAG = "BarcodeScannerFragment";
+    private static final int CAMERA_PERMISSION_REQUEST_CODE = 100;
+
+    private SurfaceView mCameraView;
+    private CameraSource mCameraSource;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_camara, container, false);
 
-        // Obtener la vista SurfaceView del layout y configurarla como contenedor de la vista de la cámara
-        surfaceView = (SurfaceView) view.findViewById(R.id.surfaceView);
+        mCameraView = view.findViewById(R.id.camera_preview);
 
-        // Inicializar el objeto IntentIntegrator y configurarlo para usar la vista SurfaceView como contenedor de la vista de la cámara
-        IntentIntegrator integrator = IntentIntegrator.forSupportFragment(this);
-        integrator.setOrientationLocked(true);
-        integrator.setDesiredBarcodeFormats(IntentIntegrator.EAN_13);
-        integrator.setPrompt("Scan a barcode");
-        integrator.setCameraId(0);
-        integrator.setBeepEnabled(false);
-        integrator.setBarcodeImageEnabled(true);
-        //integrator.setRequestedPreviewSize(640, 480);
-        integrator.initiateScan();
+        // Comprueba si la cámara tiene permiso de uso
+        if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
+        } else {
+            startCamera();
+        }
 
         return view;
     }
 
-
-    // Manejar el resultado del escaneo del código de barras
     @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
-
-        if (result != null) {
-            if (result.getContents() != null) {
-                String barcode = result.getContents();
-                // Hacer algo con el resultado del escaneo del código de barras
+        if (requestCode == CAMERA_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startCamera();
             } else {
-                // El escaneo del código de barras fue cancelado
+                Toast.makeText(getActivity(), "Se requiere permiso de cámara para escanear códigos de barras.", Toast.LENGTH_SHORT).show();
             }
         }
     }
+
+    private void startCamera() {
+        createCameraSource();
+        mCameraView.getHolder().addCallback(this);
+    }
+
+    private void createCameraSource() {
+        BarcodeDetector barcodeDetector =new BarcodeDetector.Builder(getActivity()).setBarcodeFormats(Barcode.ALL_FORMATS).build();
+        CameraSource.Builder builder = new CameraSource.Builder(getActivity(), barcodeDetector)
+                .setAutoFocusEnabled(true)
+                .setRequestedPreviewSize(1600, 1024);
+
+        mCameraSource = builder.build();
+    }
+
+    @Override
+    public void surfaceCreated(SurfaceHolder surfaceHolder) {
+        try {
+            if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
+                return;
+            }
+            mCameraSource.start(mCameraView.getHolder());
+        } catch (IOException e) {
+            Log.e(TAG, e.getMessage());
+        }
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
+
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+        mCameraSource.stop();
+    }
+
+    @Override
+    public void release() {
+
+    }
+
+    @Override
+    public void receiveDetections(Detector.Detections<Barcode> detections) {
+        SparseArray<Barcode> barcodes = detections.getDetectedItems();
+        if (barcodes.size() != 0) {
+            String barcodeValue = barcodes.valueAt(0).displayValue;
+            Log.d(TAG, "Barcode detected: " + barcodeValue);
+            Toast.makeText(getActivity(), "Código de barras detectado: " + barcodeValue, Toast.LENGTH_SHORT).show();
+        }
+    }
+
 }

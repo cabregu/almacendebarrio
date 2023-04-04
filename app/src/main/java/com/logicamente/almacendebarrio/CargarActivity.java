@@ -23,11 +23,12 @@ public class CargarActivity extends AppCompatActivity {
         buttoncamera.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                CameraFragment cameraFragment = new CameraFragment();
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_container, cameraFragment)
-                        .addToBackStack(null)
-                        .commit();
+                camfragment = new CameraFragment();
+                FragmentManager fragmentManager = getSupportFragmentManager();
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                fragmentTransaction.add(R.id.fragment_container, camfragment);
+                fragmentTransaction.addToBackStack(null);
+                fragmentTransaction.commit();
             }
         });
     }
