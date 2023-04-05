@@ -10,6 +10,12 @@
     <SurfaceView
         android:id="@+id/camera_preview"
         android:layout_width="match_parent"
-        android:layout_height="267dp" />
+        android:layout_height="583dp" />
+
+    <com.journeyapps.barcodescanner.ViewfinderView
+        android:id="@+id/viewfinder_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
 
 </FrameLayout>
