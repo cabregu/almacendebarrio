@@ -116,17 +116,17 @@ public class LoginActivity extends AppCompatActivity {
                 if (result.equals("ok")) {
                     // El inicio de sesión es exitoso, hacer algo aquí
 
-                    // Lanzar la nueva actividad
-                    Intent intent = new Intent(LoginActivity.this, MenuActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(intent);
-
                     // Guardar la sesión del usuario
                     SharedPreferences sharedPreferences = getSharedPreferences("MyPrefs", MODE_PRIVATE);
                     SharedPreferences.Editor editor = sharedPreferences.edit();
                     editor.putBoolean("isLoggedIn", true);
+                    editor.putString("username", editTextUsername.getText().toString()); // Agrega esta línea
                     editor.apply();
 
+                    // Lanzar la nueva actividad
+                    Intent intent = new Intent(LoginActivity.this, MenuActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
 
                 } else {
 
@@ -139,6 +139,6 @@ public class LoginActivity extends AppCompatActivity {
             }
         }
 
-    }
 
+    }
 }

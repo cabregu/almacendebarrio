@@ -1,13 +1,16 @@
 package com.logicamente.almacendebarrio;
-
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.android.volley.Request;
 import com.android.volley.Response;
@@ -18,20 +21,17 @@ import com.android.volley.toolbox.Volley;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class CargarActivity extends AppCompatActivity {
     private Button buttoncamera;
+    private String username;
+    private String tipodato = "Nuevo";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cargar);
+        username = getIntent().getStringExtra("username");
 
         buttoncamera = findViewById(R.id.button_scan);
         buttoncamera.setOnClickListener(new View.OnClickListener() {
@@ -54,7 +54,9 @@ public class CargarActivity extends AppCompatActivity {
             public void onClick(View v) {
                 EditText etEan = findViewById(R.id.et_ean);
                 String ean = etEan.getText().toString();
-
+                etEan.setText(ean);
+                etEan.setEnabled(true);
+                etEan.setFocusable(true);
                 hacerSolicitudHttpSiExisteEnStock(ean);
 
             }
@@ -92,9 +94,13 @@ public class CargarActivity extends AppCompatActivity {
 
                                 EditText etEan = findViewById(R.id.et_ean);
                                 EditText etDescripcion = findViewById(R.id.et_descripcion);
+                                tipodato="EnBase";
 
                                 etEan.setText(ean);
                                 etDescripcion.setText(descripcion);
+                                etEan.setEnabled(false);
+                                etEan.setFocusable(false);
+
 
                             } else {
                                 Toast.makeText(CargarActivity.this, "No se encontró ningún producto", Toast.LENGTH_LONG).show();
@@ -108,13 +114,17 @@ public class CargarActivity extends AppCompatActivity {
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
+
+                        EditText etCodigo = findViewById(R.id.et_ean);
+                        etCodigo.setText(barcode);
+                        tipodato="Nuevo";
                         error.printStackTrace();
                     }
                 });
         Volley.newRequestQueue(this).add(jsonObjectRequest);
     }
     private void hacerSolicitudHttpDeStock(String barcode) {
-        String url = "http://www.logicamente.com.ar/eanstock.php?codigo=" + barcode;
+        String url = "http://www.logicamente.com.ar/eanstock.php?codigo=" + barcode + "&usuario=" + username;
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
                     @Override
@@ -142,6 +152,9 @@ public class CargarActivity extends AppCompatActivity {
                                 etPrecioVenta.setText(precioventa);
                                 etCantidadStock.setText(cantidadstock);
                             } else {
+
+
+
                                 Toast.makeText(CargarActivity.this, "No se encontró ningún stock", Toast.LENGTH_LONG).show();
                             }
                         } catch (JSONException e) {
@@ -173,6 +186,7 @@ public class CargarActivity extends AppCompatActivity {
         String precioCompra = etPrecioCompra.getText().toString();
         String precioVenta = etPrecioVenta.getText().toString();
         String cantidadStock = etStock.getText().toString();
+        String usuario = username; // Get username from variable
 
         // Validate that all fields are filled
         if (ean.isEmpty() || descripcion.isEmpty() || precioCompra.isEmpty() || precioVenta.isEmpty() || cantidadStock.isEmpty()) {
@@ -187,6 +201,8 @@ public class CargarActivity extends AppCompatActivity {
         params.put("preciocompra", precioCompra);
         params.put("precioventa", precioVenta);
         params.put("cantidadstock", cantidadStock);
+        params.put("tipodato", tipodato);
+        params.put("usuario", usuario); // Add username to request body
 
         // Send a POST request with Volley
         String url = "http://www.logicamente.com.ar/ingresarstock.php";
@@ -194,7 +210,7 @@ public class CargarActivity extends AppCompatActivity {
             @Override
             public void onResponse(String response) {
                 // Process response if received
-                Toast.makeText(getApplicationContext(), "Data saved successfully", Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), response, Toast.LENGTH_LONG).show();
 
                 // Clear EditTexts
                 etEan.setText("");
@@ -219,7 +235,7 @@ public class CargarActivity extends AppCompatActivity {
         Volley.newRequestQueue(this).add(stringRequest);
     }
     private void hacerSolicitudHttpSiExisteEnStock(String barcode) {
-        String url = "http://www.logicamente.com.ar/eanexisteenstock.php?codigo=" + barcode;
+        String url = "http://www.logicamente.com.ar/eanexisteenstock.php?codigo=" + barcode + "&usuario=" + username;
         StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
                 new Response.Listener<String>() {
                     @Override
@@ -269,6 +285,7 @@ public class CargarActivity extends AppCompatActivity {
         params.put("preciocompra", precioCompra);
         params.put("precioventa", precioVenta);
         params.put("cantidadstock", cantidadStock);
+        params.put("usuario", username);
 
         // Send a POST request with Volley
         String url = "http://www.logicamente.com.ar/eanactualizarenstock.php";

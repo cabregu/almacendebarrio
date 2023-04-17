@@ -15,16 +15,16 @@
 
     <Button
         android:id="@+id/button_scan"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="142dp"
+        android:layout_height="59dp"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginStart="275dp"
-        android:layout_marginTop="23dp"
-        android:layout_marginEnd="21dp"
-        android:layout_marginBottom="660dp"
+        android:layout_marginStart="142dp"
+        android:layout_marginTop="596dp"
+        android:layout_marginEnd="127dp"
+        android:layout_marginBottom="76dp"
         android:text="Escanear" />
 
     <TextView
@@ -33,8 +33,8 @@
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="162dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="65dp"
         android:text="EAN"
         android:textSize="16sp" />
 
@@ -56,7 +56,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/tv_ean"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="69dp"
+        android:layout_marginTop="41dp"
         android:text="Descripción"
         android:textSize="16sp" />
 
@@ -116,11 +116,11 @@
 
     <EditText
         android:id="@+id/et_precio_compra"
-        android:layout_width="wrap_content"
+        android:layout_width="159dp"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:layout_marginStart="31dp"
-        android:layout_marginTop="366dp"
+        android:layout_marginStart="64dp"
+        android:layout_marginTop="241dp"
         android:layout_toEndOf="@+id/tv_precio_compra"
         android:hint="precio de compra"
         android:inputType="numberDecimal" />
@@ -132,9 +132,9 @@
         android:layout_below="@+id/tv_precio_venta"
         android:layout_alignParentStart="true"
         android:layout_alignParentEnd="true"
-        android:layout_marginStart="160dp"
-        android:layout_marginTop="102dp"
-        android:layout_marginEnd="145dp"
+        android:layout_marginStart="153dp"
+        android:layout_marginTop="26dp"
+        android:layout_marginEnd="152dp"
         android:layout_marginBottom="24dp"
         android:text="Guardar" />
 
