@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "360832486666",
+    "project_id": "almacendebarrio-6f0ea",
+    "storage_bucket": "almacendebarrio-6f0ea.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:360832486666:android:3bfd2e1ce991449ee07ef3",
+        "android_client_info": {
+          "package_name": "com.logicamente.almacendebarrio"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "360832486666-kgfp0gci4v6na5sdjiu3m5ach0j2309s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8sZs8xfJfdqdFumz7tQxW9WRash8fpAk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "360832486666-kgfp0gci4v6na5sdjiu3m5ach0j2309s.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
