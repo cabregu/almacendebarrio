@@ -138,6 +138,13 @@
         android:layout_marginBottom="24dp"
         android:text="Guardar" />
 
+    <ProgressBar
+        android:id="@+id/loadingProgressBar1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true" />
+
+
 
 </RelativeLayout>
 

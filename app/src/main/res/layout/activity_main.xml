@@ -21,7 +21,7 @@
         android:layout_height="wrap_content"
         android:hint="Usuario"
         android:textColorHint="@android:color/darker_gray"
-        android:inputType="text"
+        android:inputType="textCapCharacters"
         android:layout_marginBottom="16dp"/>
 
     <EditText

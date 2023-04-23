@@ -1,11 +1,28 @@
 package com.logicamente.almacendebarrio;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.SurfaceTexture;
+import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraCaptureSession;
+import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.params.StreamConfigurationMap;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Size;
+import android.view.Surface;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -21,15 +38,18 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.firestore.CollectionReference;
+
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import android.Manifest;
+
 
 
 public class CargarActivity extends AppCompatActivity {
@@ -37,6 +57,10 @@ public class CargarActivity extends AppCompatActivity {
     private String username;
     private String tipodato = "Nuevo";
     private FirebaseFirestore mfirestore;
+    private CameraDevice cameraDevice;
+    private static final int MY_PERMISSIONS_REQUEST_CAMERA = 123;
+    private ProgressBar loadingProgressBar;
+
 
 
 
@@ -45,8 +69,9 @@ public class CargarActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cargar);
         username = getIntent().getStringExtra("username");
+        username = username.toUpperCase();
         mfirestore = FirebaseFirestore.getInstance();
-
+        loadingProgressBar = findViewById(R.id.loadingProgressBar1);
 
         buttoncamera = findViewById(R.id.button_scan);
         buttoncamera.setOnClickListener(new View.OnClickListener() {
@@ -85,6 +110,116 @@ public class CargarActivity extends AppCompatActivity {
             }
         });
     }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        // Obtén una instancia del servicio de la cámara
+        CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+
+        try {
+            // Selecciona la cámara trasera
+            String cameraId = manager.getCameraIdList()[0];
+
+            // Obtén las características de la cámara
+            CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
+
+            // Configura la resolución de la vista previa
+            StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            Size[] sizes = map.getOutputSizes(SurfaceTexture.class);
+            Size previewSize = sizes[0];
+            for (Size size : sizes) {
+                if (size.getWidth() < previewSize.getWidth()) {
+                    previewSize = size;
+                }
+            }
+
+            // Configura la vista previa de la cámara
+            SurfaceTexture surfaceTexture = new SurfaceTexture(0);
+            surfaceTexture.setDefaultBufferSize(previewSize.getWidth(), previewSize.getHeight());
+            Surface previewSurface = new Surface(surfaceTexture);
+
+            // Configura el enfoque automático
+            int[] afModes = characteristics.get(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES);
+            if (afModes != null && Arrays.asList(afModes).contains(CaptureRequest.CONTROL_AF_MODE_AUTO)) {
+                CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback() {
+                    @Override
+                    public void onOpened(CameraDevice camera) {
+                        cameraDevice = camera;
+
+                        try {
+                            // Configura el modo de captura de la cámara
+                            CaptureRequest.Builder builder = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+                            builder.addTarget(previewSurface);
+                            builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO);
+
+                            // Crea una sesión de captura para la vista previa
+                            camera.createCaptureSession(Arrays.asList(previewSurface), new CameraCaptureSession.StateCallback() {
+                                @Override
+                                public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
+                                    try {
+                                        CaptureRequest request = builder.build();
+                                        cameraCaptureSession.setRepeatingRequest(request, null, null);
+                                    } catch (CameraAccessException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+
+                                @Override
+                                public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {
+                                    Toast.makeText(getApplicationContext(), "Unable to setup camera preview", Toast.LENGTH_LONG).show();
+                                }
+                            }, null);
+
+                        } catch (CameraAccessException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    @Override
+                    public void onDisconnected(CameraDevice camera) {
+                        camera.close();
+                        cameraDevice = null;
+                    }
+
+                    @Override
+                    public void onError(CameraDevice camera, int error) {
+                        camera.close();
+                        cameraDevice = null;
+                    }
+                };
+
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                        == PackageManager.PERMISSION_GRANTED) {
+                    // Permission is granted
+                    // Call the function that requires the permission
+                    String[] cameraIdList = manager.getCameraIdList();
+                } else {
+                    // Permission is not granted, request it
+                    ActivityCompat.requestPermissions(this,
+                            new String[]{Manifest.permission.CAMERA},
+                            MY_PERMISSIONS_REQUEST_CAMERA);
+                }
+
+                // Abre la cámara en segundo plano
+                manager.openCamera(cameraId, stateCallback, null);
+            }
+
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    private void showLoadingScreen() {
+        loadingProgressBar.setVisibility(View.VISIBLE);
+    }
+
+    private void hideLoadingScreen() {
+        loadingProgressBar.setVisibility(View.GONE);
+    }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -146,7 +281,7 @@ public class CargarActivity extends AppCompatActivity {
         Volley.newRequestQueue(this).add(jsonObjectRequest);
     }
 
-    private void IngresarEan(String ean, String descrip, String precioc, String preciov, String Stock) {
+    private void IngresarEan(String ean, String descrip, String precioc, String preciov, String stock) {
         // Verificar que ean no está vacío
         if (TextUtils.isEmpty(ean)) {
             Toast.makeText(getApplicationContext(), "El código EAN no puede estar vacío", Toast.LENGTH_SHORT).show();
@@ -164,13 +299,13 @@ public class CargarActivity extends AppCompatActivity {
                     DocumentSnapshot document = task.getResult();
                     if (document.exists()) {
                         // El documento ya existe
-
-                        Toast.makeText(getApplicationContext(), "El código EAN ya existe", Toast.LENGTH_SHORT).show();
+                        actualizarEan(ean,descrip,precioc,preciov,stock);
+                 //Toast.makeText(getApplicationContext(), "El código EAN ya existe", Toast.LENGTH_SHORT).show();
                     } else {
                         // El documento no existe, crear un mapa con los datos a agregar
                         Map<String, Object> map = new HashMap<>();
                         map.put("descripcion", descrip);
-                        map.put("Stock", Stock);
+                        map.put("Stock", stock);
                         map.put("preciocompra", precioc);
                         map.put("precioventa", preciov);
                         map.put("tipodato", tipodato);
@@ -180,8 +315,26 @@ public class CargarActivity extends AppCompatActivity {
                                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override
                                     public void onSuccess(Void unused) {
+
+                                        EditText etEan = findViewById(R.id.et_ean);
+                                        EditText etDescripcion = findViewById(R.id.et_descripcion);
+                                        EditText etStock = findViewById(R.id.et_stock);
+                                        EditText etPrecioC = findViewById(R.id.et_precio_compra);
+                                        EditText etPrecioV = findViewById(R.id.et_precio_venta);
+                                        etEan.setText("");
+                                        etDescripcion.setText("");
+                                        etStock.setText("");
+                                        etPrecioC.setText("");
+                                        etPrecioV.setText("");
+
+                                        // Ocultar el teclado
+                                        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                                        if (imm != null) {
+                                            imm.hideSoftInputFromWindow(etEan.getWindowToken(), 0);
+                                        }
+
                                         Toast.makeText(getApplicationContext(), "Agregado exitosamente", Toast.LENGTH_SHORT).show();
-                                        finish();
+
                                     }
                                 })
                                 .addOnFailureListener(new OnFailureListener() {
@@ -220,8 +373,26 @@ public class CargarActivity extends AppCompatActivity {
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void unused) {
-                        Toast.makeText(getApplicationContext(), "Actualizado exitosamente", Toast.LENGTH_SHORT).show();
-                        finish();
+                        EditText etEan = findViewById(R.id.et_ean);
+                        EditText etDescripcion = findViewById(R.id.et_descripcion);
+                        EditText etStock = findViewById(R.id.et_stock);
+                        EditText etPrecioC = findViewById(R.id.et_precio_compra);
+                        EditText etPrecioV = findViewById(R.id.et_precio_venta);
+                        etEan.setText("");
+                        etDescripcion.setText("");
+                        etStock.setText("");
+                        etPrecioC.setText("");
+                        etPrecioV.setText("");
+
+
+                        // Ocultar el teclado
+                        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                        if (imm != null) {
+                            imm.hideSoftInputFromWindow(etEan.getWindowToken(), 0);
+                        }
+
+                        Toast.makeText(getApplicationContext(), "Agregado exitosamente", Toast.LENGTH_SHORT).show();
+
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -242,6 +413,8 @@ public class CargarActivity extends AppCompatActivity {
         // Obtener la referencia al documento con ID "ean"
         DocumentReference docRef = mfirestore.collection(username).document(ean);
 
+        Toast.makeText(getApplicationContext(), " " + ean + " " + username + " ", Toast.LENGTH_SHORT).show();
+
         // Obtener los datos del documento
         docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
@@ -250,6 +423,8 @@ public class CargarActivity extends AppCompatActivity {
                     DocumentSnapshot document = task.getResult();
                     if (document.exists()) {
                         // El documento ya existe, obtener los datos y llenar los EditText
+
+                        EditText etEan = findViewById(R.id.et_ean);
                         EditText etDescripcion = findViewById(R.id.et_descripcion);
                         EditText etStock = findViewById(R.id.et_stock);
                         EditText etPrecioC = findViewById(R.id.et_precio_compra);
@@ -260,6 +435,7 @@ public class CargarActivity extends AppCompatActivity {
                         String precioC = document.getString("preciocompra");
                         String precioV = document.getString("precioventa");
 
+                        etEan.setText(ean);
                         etDescripcion.setText(descripcion);
                         etStock.setText(stock);
                         etPrecioC.setText(precioC);
