@@ -56,13 +56,10 @@ public class CargarActivity extends AppCompatActivity {
     private Button buttoncamera;
     private String username;
     private String tipodato = "Nuevo";
-    private FirebaseFirestore mfirestore;
+    private FirebaseFirestore mfirestore = FirestoreConfig.getFirestoreInstance();
     private CameraDevice cameraDevice;
     private static final int MY_PERMISSIONS_REQUEST_CAMERA = 123;
     private ProgressBar loadingProgressBar;
-
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,6 +67,7 @@ public class CargarActivity extends AppCompatActivity {
         setContentView(R.layout.activity_cargar);
         username = getIntent().getStringExtra("username");
         username = username.toUpperCase();
+
         mfirestore = FirebaseFirestore.getInstance();
         loadingProgressBar = findViewById(R.id.loadingProgressBar1);
 
@@ -306,9 +304,10 @@ public class CargarActivity extends AppCompatActivity {
                         Map<String, Object> map = new HashMap<>();
                         map.put("descripcion", descrip);
                         map.put("Stock", stock);
-                        map.put("preciocompra", precioc);
-                        map.put("precioventa", preciov);
+                        map.put("preciocompra", Double.parseDouble(precioc));
+                        map.put("precioventa", Double.parseDouble(preciov));
                         map.put("tipodato", tipodato);
+
 
                         // Agregar el documento con ID "ean" y los datos en el mapa
                         docRef.set(map)
@@ -364,8 +363,8 @@ public class CargarActivity extends AppCompatActivity {
         Map<String, Object> map = new HashMap<>();
         map.put("descripcion", descrip);
         map.put("Stock", Stock);
-        map.put("preciocompra", precioc);
-        map.put("precioventa", preciov);
+        map.put("preciocompra", Double.parseDouble(precioc));
+        map.put("precioventa", Double.parseDouble(preciov));
         map.put("tipodato", tipodato);
 
         // Actualizar el documento con ID "ean" y los nuevos datos en el mapa
